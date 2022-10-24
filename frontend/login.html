@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,minimum-scale=1,initial-scale=1"
+    />
+    <title>Login</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+
+    <link rel="stylesheet" href="/css/base.css" />
+  </head>
+  <body>
+    <div class="auth">
+      <h1>Login</h1>
+      <form>
+        <p>
+          <label for="email">Email:</label> <input type="text" name="email" />
+        </p>
+        <p>
+          <label for="password">Password:</label>
+          <input type="password" name="password" />
+        </p>
+        <button class="login">Login</button>
+      </form>
+      <div id="message"></div>
+    </div>
+
+    <script src="/js/base.js"></script>
+    <script>
+      const loginBtn = document.querySelector("button.login");
+      loginBtn.addEventListener("click", login);
+      function login(e) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.innerText = "";
+        e.preventDefault();
+        const email = document.querySelector("input[name=email]").value;
+        const password = document.querySelector("input[name=password]").value;
+        fetch(`${EXPRESS_ENDPOINT}/auth/login`, {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => {
+            console.log("response", response);
+            if (response.ok) {
+              return response.json();
+            } else {
+              return Promise.reject("Invalid login.");
+            }
+          })
+          .then((data) => {
+            console.log(data);
+            localStorage.setItem("jwt_token", data.token);
+            window.location = "/index.html";
+          })
+          .catch((err) => {
+            console.warn(err);
+            messageDiv.innerText = err;
+          });
+      }
+    </script>
+  </body>
+</html>

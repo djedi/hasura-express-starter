@@ -1,11 +1,19 @@
 import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import cors from "cors";
 import { gql } from "graphql-request";
 import { client } from "./client";
 import { generateJWT } from "./jwt";
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Cors
+const allowedOrigins = ["http://localhost:9000"];
+const options: cors.CorsOptions = {
+  origin: allowedOrigins,
+};
+app.use(cors(options));
 
 // Parse JSON in request bodies
 app.use(express.json());
@@ -52,44 +60,44 @@ app.post("/auth/register", async (req: Request, res: Response) => {
 });
 
 app.post("/auth/login", async (req: Request, res: Response) => {
-	const { email, password } = req.body as Record<string, string>;
+  const { email, password } = req.body as Record<string, string>;
 
-	let { user } = await client.request(
-	  gql`
-		query getUserByEmail($email: String!) {
-		  user(where: { email: { _eq: $email } }) {
-			id
-			password
-		  }
-		}
-	  `,
-	  {
-		email,
-	  }
-	);
+  let { user } = await client.request(
+    gql`
+      query getUserByEmail($email: String!) {
+        user(where: { email: { _eq: $email } }) {
+          id
+          password
+        }
+      }
+    `,
+    {
+      email,
+    }
+  );
 
-	// Since we filtered on a non-primary key we got an array back
-	user = user[0];
+  // Since we filtered on a non-primary key we got an array back
+  user = user[0];
 
-	if (!user) {
-	  res.sendStatus(401);
-	  return;
-	}
+  if (!user) {
+    res.sendStatus(401);
+    return;
+  }
 
-	// Check if password matches the hashed version
-	const passwordMatch = await bcrypt.compare(password, user.password);
+  // Check if password matches the hashed version
+  const passwordMatch = await bcrypt.compare(password, user.password);
 
-	if (passwordMatch) {
-	  res.send({
-		token: generateJWT({
-		  defaultRole: "user",
-		  allowedRoles: ["user"],
-		  otherClaims: {
-			"X-Hasura-User-Id": user.id,
-		  },
-		}),
-	  });
-	} else {
-	  res.sendStatus(401);
-	}
-  });
+  if (passwordMatch) {
+    res.send({
+      token: generateJWT({
+        defaultRole: "user",
+        allowedRoles: ["user"],
+        otherClaims: {
+          "X-Hasura-User-Id": user.id,
+        },
+      }),
+    });
+  } else {
+    res.sendStatus(401);
+  }
+});
