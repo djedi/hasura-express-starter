@@ -10,7 +10,10 @@ if (jwtToken) {
   // query user info
   fetch(HASURA_ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${jwtToken}`,
+    },
     body: JSON.stringify({
       query: `query getUser {
 				user {
@@ -22,7 +25,7 @@ if (jwtToken) {
   })
     .then((res) => res.json())
     .then((res) => {
-      console.log(res.data);
+      console.log("res", res);
       if (res.data.user) {
         document.getElementById("display-email").innerText =
           res.data.user[0].email;
@@ -30,7 +33,10 @@ if (jwtToken) {
     });
 }
 
-document.getElementById("logout").addEventListener("click", (evt) => {
-  localStorage.removeItem("jwt_token");
-  window.location.href = "/index.html";
-});
+const logout = document.getElementById("logout");
+if (logout) {
+  logout.addEventListener("click", (evt) => {
+    localStorage.removeItem("jwt_token");
+    window.location.href = "/index.html";
+  });
+}
